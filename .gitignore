@@ -1,0 +1,21 @@
+# Real financial data should never be committed.
+raw/private/
+parsed/
+processed/
+final/
+
+# Local runtime files
+__pycache__/
+*.pyc
+.DS_Store
+.env
+
+# Keep synthetic sample inputs tracked.
+!raw/
+!raw/alipay/
+!raw/wechat/
+!raw/bank/
+!raw/bank/boc/
+!raw/douyin/
+!raw/meituan/
+!raw/**/*.csv

@@ -1,0 +1,7 @@
+transaction_time,raw_direction,amount,status,payment_method,counterparty,item_title,transaction_id,related_transaction_id
+2026-04-03 09:10:00,支出,42.80,交易成功,余额,Metro Cafe,Latte and sandwich,ali_1001,
+2026-04-05 12:22:00,支出,199.00,交易成功,PayLater,Online Learning,Python course,ali_1002,
+2026-04-09 08:00:00,收入,50.00,退款成功,PayLater,Online Learning,Python course partial refund,ali_2002,ali_1002
+2026-04-15 10:30:00,支出,300.00,交易成功,银行卡,Alipay Wallet Topup,Wallet top-up from bank,ali_3001,
+2026-04-20 20:11:00,支出,199.00,交易成功,银行卡,PayLater,PayLater April repayment,ali_4001,
+2026-04-22 18:40:00,其他,88.88,待确认,余额,Unknown Wallet,Ambiguous wallet movement,ali_9001,

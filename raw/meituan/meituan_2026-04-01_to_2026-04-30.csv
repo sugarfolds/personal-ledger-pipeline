@@ -1,0 +1,4 @@
+transaction_time,kind,amount,payment_method,counterparty,item_title,transaction_id,related_transaction_id
+2026-04-06 19:15:00,支付,58.60,MonthlyPay,Noodle House,Noodle dinner,mt_1001,
+2026-04-12 12:30:00,支付,24.90,MonthlyPay,Fruit Shop,Fruit order,mt_1002,
+2026-04-20 19:00:00,还款,83.50,Bank Card,Meituan MonthlyPay,MonthlyPay April repayment,mt_3001,

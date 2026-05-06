@@ -1,0 +1,4 @@
+transaction_time,income_expense,amount,status,payment_method,counterparty,item_title,transaction_id,related_transaction_id
+2026-04-02 18:20:00,支出,36.50,支付成功,零钱,Neighborhood Bakery,Dinner,wechat_1001,
+2026-04-08 21:00:00,支出,120.00,支付成功,零钱,Friend A,Personal repayment,wechat_2001,
+2026-04-18 10:00:00,收入,36.50,退款成功,零钱,Neighborhood Bakery,Dinner full refund,wechat_3001,wechat_1001
