@@ -1,6 +1,6 @@
 # Personal Ledger Pipeline
 
-[![demo](https://github.com/qishenfeng-sys/personal-ledger-pipeline/actions/workflows/demo.yml/badge.svg)](https://github.com/qishenfeng-sys/personal-ledger-pipeline/actions/workflows/demo.yml)
+[![demo](https://github.com/sugarfolds/personal-ledger-pipeline/actions/workflows/demo.yml/badge.svg)](https://github.com/sugarfolds/personal-ledger-pipeline/actions/workflows/demo.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A local-first, source-first data pipeline that turns messy personal finance exports into a traceable ledger with reviewable cleaning rules.
