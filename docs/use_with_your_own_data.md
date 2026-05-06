@@ -99,6 +99,21 @@ Upload a CSV or normalized JSON file. Parsing and report generation run in the b
 
 For best results, upload a cleaned ledger exported from the CLI. Browser-side raw parsing is deliberately conservative because payment exports vary by source and language.
 
+## Codex Skill
+
+This repo includes a local Codex workflow at `skills/personal-ledger-pipeline/`.
+
+Install it from the repo root:
+
+```bash
+mkdir -p ~/.codex/skills
+cp -R skills/personal-ledger-pipeline ~/.codex/skills/
+```
+
+Then invoke `$personal-ledger-pipeline` when you want Codex to guide a private local run from raw files to cleaned ledger, manual review, report generation, and privacy checks.
+
+See [Codex skill usage](codex_skill.md).
+
 ## Dependencies
 
 The synthetic demo uses only Python's standard library. XLSX intake requires:

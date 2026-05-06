@@ -104,6 +104,26 @@ Current browser v1 supports:
 - Markdown, HTML, and PNG export,
 - repayment, internal-transfer, refund, duplicate-bank-shadow, and review-queue logic.
 
+## Codex Skill
+
+This repo includes a repo-distributed Codex skill:
+
+- [skills/personal-ledger-pipeline/SKILL.md](skills/personal-ledger-pipeline/SKILL.md)
+- [skills/personal-ledger-pipeline/agents/openai.yaml](skills/personal-ledger-pipeline/agents/openai.yaml)
+
+The skill is a reusable agent workflow for importing local bill exports, running the pipeline, reviewing ambiguous rows, generating annual reports, and checking privacy before any GitHub-facing output.
+
+Install it locally from a cloned repo:
+
+```bash
+mkdir -p ~/.codex/skills
+cp -R skills/personal-ledger-pipeline ~/.codex/skills/
+```
+
+Then invoke it in Codex as `$personal-ledger-pipeline`.
+
+See [Codex skill usage](docs/codex_skill.md) for scope, install notes, and privacy boundaries.
+
 ## Why This Exists
 
 Consumer finance exports are not clean analytics data. A single real-world payment can appear across multiple systems:
