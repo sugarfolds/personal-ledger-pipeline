@@ -1,8 +1,36 @@
 # Personal Ledger Pipeline
 
-A local-first, source-first data pipeline for messy personal finance exports.
+[![demo](https://github.com/qishenfeng-sys/personal-ledger-pipeline/actions/workflows/demo.yml/badge.svg)](https://github.com/qishenfeng-sys/personal-ledger-pipeline/actions/workflows/demo.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-This repository is a **portfolio-safe demo**. It contains only synthetic sample transactions and does not include real bank statements, account balances, merchants, transaction IDs, or counterparties.
+A local-first, source-first data pipeline that turns messy personal finance exports into a traceable ledger with reviewable cleaning rules.
+
+This is a **portfolio-safe demo**. It contains only synthetic transactions and does not include real bank statements, account balances, merchants, transaction IDs, or counterparties.
+
+## Highlights
+
+- Normalizes multi-source exports from payment apps, bank cards, and platform bills.
+- Separates real consumption from monthly repayments, internal transfers, matched refunds, and duplicate bank charges.
+- Preserves source evidence through `source_file` and `raw_row_number`.
+- Sends ambiguous rows to a manual-review queue instead of silently guessing.
+- Generates reproducible cleaned ledgers, summaries, review queues, and a local HTML dashboard.
+
+## Demo In One Command
+
+```bash
+make demo
+```
+
+Generated outputs are ignored by git and can be recreated locally at any time.
+
+```text
+processed/normalized/current_ledger_2026-04-01_to_2026-04-30.csv
+processed/cleaned/current_ledger_2026-04-01_to_2026-04-30.cleaned.csv
+final/summary/summary_2026-04-01_to_2026-04-30.md
+final/review/manual_review_queue_2026-04-01_to_2026-04-30.csv
+final/ledger/gross_ledger_2026-04-01_to_2026-04-30.csv
+final/visual/dashboard_2026-04-01_to_2026-04-30.html
+```
 
 ## Why This Exists
 
@@ -17,16 +45,16 @@ Consumer finance exports are not clean analytics data. A single real-world payme
 
 This project demonstrates how to turn messy exports into a traceable ledger pipeline without handing credentials to a third party.
 
-## Pipeline
+## Pipeline Architecture
 
-```text
-raw/
-  -> processed/normalized/
-  -> processed/cleaned/
-  -> final/summary/
-  -> final/review/
-  -> final/ledger/
-  -> final/visual/
+```mermaid
+flowchart LR
+  A["raw exports<br/>CSV / app / bank"] --> B["normalized ledger<br/>unified fields"]
+  B --> C["cleaned ledger<br/>rules + review flags"]
+  C --> D["summary reports"]
+  C --> E["manual review queue"]
+  C --> F["gross ledger"]
+  C --> G["local dashboard"]
 ```
 
 Key design principles:
@@ -47,28 +75,15 @@ The synthetic sample data includes:
 - an internal transfer between bank and wallet,
 - an ambiguous record sent to manual review.
 
-## Run The Demo
+## Reconciliation Examples
 
-```bash
-python3 scripts/run_sample_pipeline.py
-```
-
-or:
-
-```bash
-make demo
-```
-
-Generated outputs:
-
-- `processed/normalized/current_ledger_2026-04-01_to_2026-04-30.csv`
-- `processed/cleaned/current_ledger_2026-04-01_to_2026-04-30.cleaned.csv`
-- `final/summary/summary_2026-04-01_to_2026-04-30.md`
-- `final/review/manual_review_queue_2026-04-01_to_2026-04-30.csv`
-- `final/ledger/gross_ledger_2026-04-01_to_2026-04-30.csv`
-- `final/visual/dashboard_2026-04-01_to_2026-04-30.html`
-
-Generated outputs are ignored by git. Recreate them locally with `make demo`.
+| Case | Handling |
+| --- | --- |
+| Monthly repayment | Excluded from new consumption while original purchases remain traceable |
+| Matched refund | Deducted from net consumption instead of treated as ordinary income |
+| Duplicate bank charge | Marked as app-side shadow when amount and time match |
+| Internal transfer | Excluded from spend/income views via `transfer_scope=internal` |
+| Ambiguous wallet flow | Sent to `manual_review_queue` with original source location |
 
 ## Core Fields
 
@@ -103,3 +118,14 @@ This is not a full personal finance app. It is a data pipeline demo focused on:
 - manual-review workflow,
 - reproducible outputs,
 - and privacy-safe project packaging.
+
+## Repository Layout
+
+```text
+raw/                    synthetic sample exports only
+scripts/                runnable sample pipeline
+schema/rules/           unified ledger field definitions
+docs/                   portfolio notes and public-boundary guidance
+processed/              generated normalized and cleaned outputs, gitignored
+final/                  generated reports and dashboard, gitignored
+```
