@@ -11,10 +11,13 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from scripts.core.ledger import (
+    REVIEW_DECISION_FIELDS,
+    apply_review_decisions,
     build_refunds_by_original,
     build_summary,
     clean,
     read_csv,
+    review_decision_template,
     write_csv,
 )
 from scripts.parsers.registry import IntakeError, parse_raw_dir, source_counts
@@ -74,6 +77,7 @@ def main() -> int:
     parser.add_argument("raw_dir", type=Path, help="Directory containing raw/<source>/ exports.")
     parser.add_argument("--period", help="Output period label. Defaults to the date span found in the rows.")
     parser.add_argument("--parsed", type=Path, help="Optional normalized CSV created by scripts/import_raw.py.")
+    parser.add_argument("--review-decisions", type=Path, help="Optional manual review decisions CSV from final/review/*.template.csv.")
     args = parser.parse_args()
 
     warnings: list[str] = []
@@ -89,18 +93,22 @@ def main() -> int:
 
     period = args.period or infer_period(rows)
     cleaned_rows = clean(rows)
+    if args.review_decisions:
+        cleaned_rows = apply_review_decisions(cleaned_rows, read_csv(args.review_decisions))
     review_rows = [row for row in cleaned_rows if row["needs_review"] == "true" or row["clean_status"] == "needs_review"]
 
     normalized_path = ROOT / "processed" / "normalized" / f"current_ledger_{period}.csv"
     cleaned_path = ROOT / "processed" / "cleaned" / f"current_ledger_{period}.cleaned.csv"
     gross_path = ROOT / "final" / "ledger" / f"gross_ledger_{period}.csv"
     review_path = ROOT / "final" / "review" / f"manual_review_queue_{period}.csv"
+    review_template_path = ROOT / "final" / "review" / f"review_decisions_{period}.template.csv"
     summary_path = ROOT / "final" / "summary" / f"summary_{period}.md"
 
     write_csv(normalized_path, rows)
     write_csv(cleaned_path, cleaned_rows)
     write_csv(gross_path, cleaned_rows)
     write_csv(review_path, review_rows)
+    write_csv(review_template_path, review_decision_template(review_rows), REVIEW_DECISION_FIELDS)
     write_summary(summary_path, cleaned_rows, warnings)
 
     print(f"Pipeline complete for {period}")
@@ -108,6 +116,7 @@ def main() -> int:
     print(f"- cleaned: {cleaned_path}")
     print(f"- summary: {summary_path}")
     print(f"- review queue: {review_path}")
+    print(f"- review decisions template: {review_template_path}")
     for source, count in sorted(source_counts(cleaned_rows).items()):
         print(f"- {source}: {count} rows")
     if warnings:

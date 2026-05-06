@@ -46,6 +46,7 @@ Use this skill when helping a user import private bill exports, run the local le
    - Refund rows should deduct original consumption when `related_transaction_id` is available.
    - Bank app-shadow rows should be excluded when an app-side row gives richer detail.
    - Ambiguous wallet flows should enter the manual review queue.
+   - If review decisions are needed, edit `final/review/review_decisions_<period>.template.csv`, then rerun with `--review-decisions <path>`.
 
 6. Generate or inspect the annual report.
    - For the static sample, run `make demo`.
@@ -61,6 +62,7 @@ Use this skill when helping a user import private bill exports, run the local le
 
 ```bash
 make clean && make demo
+make test
 python3 scripts/import_raw.py raw --out parsed
 python3 scripts/run_pipeline.py raw
 python3 -m py_compile scripts/run_sample_pipeline.py scripts/import_raw.py scripts/run_pipeline.py scripts/core/ledger.py scripts/parsers/registry.py

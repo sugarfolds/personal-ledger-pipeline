@@ -21,3 +21,14 @@ The parser registry is source-specific. The goal is traceable intake, not broad 
 - Douyin bills: platform rewards, campaign income, refunds, merchant payments, and repayment labels can appear in similar export shapes, so Douyin is handled as its own branch.
 - Bank app shadows: a bank card charge can duplicate an app-side merchant payment. The cleaner matches amount and nearby timestamp, then keeps the richer app-side row.
 - Manual review: unclear wallet movement is routed to review rather than guessed into income or expense.
+
+## Regression Coverage
+
+`make test` currently checks the synthetic fixture across all public sample sources:
+
+- Alipay, WeChat, Meituan, Douyin, and BOC parser coverage.
+- Credit and personal repayments excluded from new consumption.
+- Wallet and bank internal transfers excluded from spend views.
+- Matched refunds deducted from original consumption.
+- Bank-side app-shadow payment excluded.
+- Manual review decision can include an ambiguous row and update net consumption.

@@ -48,10 +48,36 @@ processed/normalized/current_ledger_<period>.csv
 processed/cleaned/current_ledger_<period>.cleaned.csv
 final/summary/summary_<period>.md
 final/review/manual_review_queue_<period>.csv
+final/review/review_decisions_<period>.template.csv
 final/ledger/gross_ledger_<period>.csv
 ```
 
 Review `final/review/` before treating the summary as final. Ambiguous wallet flows and uncertain source rows are intentionally separated for a second pass.
+
+## Manual Review Decisions
+
+The first run writes two review files:
+
+```text
+final/review/manual_review_queue_<period>.csv
+final/review/review_decisions_<period>.template.csv
+```
+
+Edit the template file locally. Supported `action` values:
+
+| Action | Meaning |
+| --- | --- |
+| `include` | Include the row in the cleaned ledger after applying any direction/type/scope edits |
+| `exclude` | Exclude the row and mark the decision as reviewed |
+| `keep_review` | Leave the row in the review queue |
+
+Then rerun:
+
+```bash
+python3 scripts/run_pipeline.py raw --review-decisions final/review/review_decisions_<period>.template.csv
+```
+
+The summary and cleaned ledger will reflect the manual decisions.
 
 ## What The Cleaner Does
 
@@ -79,4 +105,12 @@ The synthetic demo uses only Python's standard library. XLSX intake requires:
 
 ```bash
 python3 -m pip install -r requirements.txt
+```
+
+## Validation
+
+Run the synthetic fixture checks before changing parser or cleaning rules:
+
+```bash
+make test
 ```

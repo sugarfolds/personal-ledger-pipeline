@@ -30,6 +30,17 @@ FIELDS = [
     "clean_rule",
 ]
 
+REVIEW_DECISION_FIELDS = [
+    "transaction_id",
+    "source",
+    "raw_row_number",
+    "action",
+    "direction",
+    "normalized_type",
+    "transfer_scope",
+    "notes",
+]
+
 
 def money(value: str | Decimal) -> Decimal:
     return Decimal(str(value or "0")).quantize(Decimal("0.01"))
@@ -46,6 +57,74 @@ def write_csv(path: Path, rows: list[dict[str, str]], fields: list[str] = FIELDS
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         writer.writerows(rows)
+
+
+def review_decision_template(review_rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    return [
+        {
+            "transaction_id": row.get("transaction_id", ""),
+            "source": row.get("source", ""),
+            "raw_row_number": row.get("raw_row_number", ""),
+            "action": "",
+            "direction": row.get("direction", ""),
+            "normalized_type": row.get("normalized_type", ""),
+            "transfer_scope": row.get("transfer_scope", ""),
+            "notes": "",
+        }
+        for row in review_rows
+    ]
+
+
+def apply_review_decisions(rows: list[dict[str, str]], decisions: list[dict[str, str]]) -> list[dict[str, str]]:
+    by_key = {
+        _review_key(row): row
+        for row in rows
+        if row.get("transaction_id") or (row.get("source") and row.get("raw_row_number"))
+    }
+    for decision in decisions:
+        action = decision.get("action", "").strip().lower()
+        if not action:
+            continue
+        row = by_key.get(_review_key(decision))
+        if row is None:
+            continue
+        if action == "include":
+            _copy_review_fields(row, decision)
+            row["include_in_ledger"] = "true"
+            row["needs_review"] = "false"
+            row["clean_status"] = "review_included"
+            row["clean_rule"] = "manual_review_decision_include"
+        elif action == "exclude":
+            _copy_review_fields(row, decision)
+            row["include_in_ledger"] = "false"
+            row["needs_review"] = "false"
+            row["clean_status"] = "review_excluded"
+            row["clean_rule"] = "manual_review_decision_exclude"
+        elif action in {"keep_review", "review"}:
+            row["include_in_ledger"] = "false"
+            row["needs_review"] = "true"
+            row["clean_status"] = "needs_review"
+            row["clean_rule"] = "manual_review_deferred"
+        else:
+            row["include_in_ledger"] = "false"
+            row["needs_review"] = "true"
+            row["clean_status"] = "needs_review"
+            row["clean_rule"] = f"unknown_review_action:{action}"
+    return rows
+
+
+def _review_key(row: dict[str, str]) -> str:
+    transaction_id = row.get("transaction_id", "")
+    if transaction_id:
+        return f"id:{transaction_id}"
+    return f"row:{row.get('source', '')}:{row.get('raw_row_number', '')}"
+
+
+def _copy_review_fields(row: dict[str, str], decision: dict[str, str]) -> None:
+    for field in ("direction", "normalized_type", "transfer_scope"):
+        value = decision.get(field, "").strip()
+        if value:
+            row[field] = value
 
 
 def base_row(source: str, root: Path, path: Path, raw_index: int, row: dict[str, str]) -> dict[str, str]:

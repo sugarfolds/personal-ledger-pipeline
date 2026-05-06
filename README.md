@@ -44,6 +44,14 @@ examples/annual_report_2026.html
 examples/annual_report_2026.md
 ```
 
+## Test The Pipeline
+
+```bash
+make test
+```
+
+The test suite uses the synthetic source fixtures to check parser coverage, repayment exclusion, internal-transfer exclusion, refund deductions, duplicate bank shadows, and manual-review decisions.
+
 ## Use Your Own Data Locally
 
 The public demo stays synthetic. For private exports, run everything locally and keep generated files out of Git history.
@@ -51,6 +59,23 @@ The public demo stays synthetic. For private exports, run everything locally and
 ```bash
 python3 scripts/import_raw.py raw --out parsed
 python3 scripts/run_pipeline.py raw
+```
+
+This writes private local outputs:
+
+```text
+processed/normalized/current_ledger_<period>.csv
+processed/cleaned/current_ledger_<period>.cleaned.csv
+final/summary/summary_<period>.md
+final/review/manual_review_queue_<period>.csv
+final/review/review_decisions_<period>.template.csv
+final/ledger/gross_ledger_<period>.csv
+```
+
+Review `final/review/` before treating the summary as final. To apply manual decisions, fill the template file and rerun:
+
+```bash
+python3 scripts/run_pipeline.py raw --review-decisions final/review/review_decisions_<period>.template.csv
 ```
 
 The importer scans source-specific folders such as `raw/alipay/`, `raw/wechat/`, `raw/meituan/`, `raw/douyin/`, and `raw/bank/<boc|cmb|icbc|abc>/`. CSV is the stable v1 path; XLSX intake is available through `openpyxl`; PDF formats are called out with actionable warnings because those exports vary heavily by platform and bank.
@@ -177,6 +202,7 @@ This public repository is designed around a hard boundary:
 - Public demo data must be synthetic.
 - IDs, names, merchants, account hints, and balances must be fake.
 - `.gitignore` blocks generated outputs and private raw data by default.
+- CI runs `make test` and `make demo` so parser and cleaning regressions are caught before publishing.
 
 See [SECURITY.md](SECURITY.md) for the publishing checklist.
 
