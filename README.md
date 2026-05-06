@@ -94,15 +94,26 @@ Open the static app locally:
 web/annual-report/index.html
 ```
 
-Upload a cleaned ledger CSV or normalized JSON. The app parses, cleans, aggregates, renders, and exports inside the browser tab. It has no backend API, login, or upload step.
+Upload an Alipay CSV, cleaned ledger CSV, or normalized JSON. The app parses, cleans, aggregates, renders, and exports inside the browser tab. It has no backend API, login, or upload step.
 
 Current browser v1 supports:
 
 - CSV / JSON import,
+- GBK / GB18030 Alipay CSV decoding,
 - EN / Chinese switching,
 - serious, board-roast, and social-share styles,
 - Markdown, HTML, and PNG export,
-- repayment, internal-transfer, refund, duplicate-bank-shadow, and review-queue logic.
+- repayment, internal-transfer, refund, investment-flow, and neutral-flow separation.
+
+Before publishing the web page, run the mobile preflight:
+
+```bash
+make verify-web-mobile
+```
+
+It checks common phone viewports, verifies long-PNG export, and confirms that parsing/rendering makes no HTTP requests. See [Web mobile verification](docs/web_mobile_verification.md).
+
+For Vercel, deploy `web/annual-report/` as the project root instead of deploying the repository root. See [Vercel deployment](docs/vercel_deployment.md).
 
 ## Codex Skill
 
