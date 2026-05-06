@@ -15,6 +15,7 @@ RAW = ROOT / "raw"
 NORMALIZED = ROOT / "processed" / "normalized"
 CLEANED = ROOT / "processed" / "cleaned"
 FINAL = ROOT / "final"
+EXAMPLES = ROOT / "examples"
 PERIOD = "2026-04-01_to_2026-04-30"
 REPORT_YEAR = "2026"
 
@@ -310,22 +311,29 @@ def build_annual_report(
 
     top_source = max(by_source.items(), key=lambda item: item[1], default=("n/a", Decimal("0.00")))
     review_ratio = Decimal(len(review_rows)) / Decimal(len(rows)) if rows else Decimal("0.00")
+    repayment_pressure = repayment_total / summary["net_consumption"] if summary["net_consumption"] else Decimal("0.00")
+    refund_ratio = summary["refund_deduction"] / summary["gross_expense"] if summary["gross_expense"] else Decimal("0.00")
 
     if summary["net_consumption"] == 0:
         persona = "Zero-Spend CFO"
-        metaphor = "This synthetic person looks like a listed company before operations begin: clean cap table, quiet P&L."
+        persona_roast = "Operations were so quiet that even the audit committee had to check whether the company had launched."
+        metaphor = "A pre-revenue company with unusually disciplined procurement."
     elif repayment_total > summary["net_consumption"] / 2:
-        persona = "Repayment-Aware CFO"
-        metaphor = "Cash flow behaves like a company with visible debt service: consumption is one story, repayment timing is another."
+        persona = "Debt-Service Maximalist"
+        persona_roast = "This period did not spend wildly; it merely let past spending return with an invoice and a calendar invite."
+        metaphor = "A small company whose liabilities have better follow-up habits than its management team."
     elif review_ratio > Decimal("0.10"):
-        persona = "Audit-First Operator"
-        metaphor = "The ledger resembles a business with promising transactions and a serious audit committee."
+        persona = "Audit-Committee Frequent Flyer"
+        persona_roast = "The books are not messy enough to be scandalous, just messy enough to deserve a second meeting."
+        metaphor = "A business that keeps finding footnotes in places where normal people keep receipts."
     elif top_source[1] > summary["net_consumption"] / 2:
-        persona = "Concentrated Segment Manager"
-        metaphor = f"Spending is shaped like a focused single-segment company, with {top_source[0]} carrying most of the operating activity."
+        persona = "Single-Segment Enthusiast"
+        persona_roast = f"Diversification was available, but {top_source[0]} apparently won the board vote by acclamation."
+        metaphor = f"A focused single-segment company with {top_source[0]} acting as both revenue engine and personality test."
     else:
-        persona = "Balanced Small-Cap Household"
-        metaphor = "The period reads like a small, diversified company: no single line item owns the whole narrative."
+        persona = "Diversified Small-Cap Household"
+        persona_roast = "No one category ruined the period. This is called diversification, or in personal finance, plausible deniability."
+        metaphor = "A small, diversified company where every department is small enough to deny responsibility."
 
     cashflow_operating = summary["gross_income"] - summary["net_consumption"]
     cashflow_investing = Decimal("0.00")
@@ -342,7 +350,16 @@ def build_annual_report(
         "",
         f"Demo period: `{PERIOD}`",
         "",
-        "This report is generated from the cleaned ledger only. It is a portfolio-safe synthetic demo, not a production accounting statement.",
+        "This report is generated from the cleaned ledger only. It is a portfolio-safe synthetic demo, not a production accounting statement. It is serious about the math and mildly judgmental about the behavior.",
+        "",
+        "## Letter to Shareholders",
+        "",
+        "Dear shareholders, creditors, future selves, and anyone still pretending that a transaction export is a personality-neutral object:",
+        "",
+        f"Management reports net consumption of {summary['net_consumption']:.2f} after refund deductions. "
+        f"The company remained cash-flow positive in the ledger view, mostly because income did the heavy lifting while spending tried to look strategic in a quarter-end deck.",
+        "",
+        f"The headline risk is not extravagance. It is timing. Repayments totaled {repayment_total:.2f}, which means earlier consumption came back wearing a suit and calling itself financial discipline.",
         "",
         "## Financial Highlights",
         "",
@@ -354,6 +371,8 @@ def build_annual_report(
         f"- Net consumption: {summary['net_consumption']:.2f}",
         f"- Ledger-view net cashflow: {summary['net_cashflow']:.2f}",
         f"- Manual review rows: {len(review_rows)}",
+        f"- Repayment pressure: {repayment_pressure:.2%}",
+        f"- Refund recovery rate: {refund_ratio:.2%}",
         "",
         "## Personal Income Statement",
         "",
@@ -381,18 +400,29 @@ def build_annual_report(
         "## Management Discussion and Analysis",
         "",
         f"During the demo period, the ledger generated {summary['net_consumption']:.2f} of net consumption after matched refund deductions. "
-        f"Credit repayments of {repayment_total:.2f} were kept out of new consumption, preserving the original purchase basis while still making repayment timing visible.",
+        f"Credit repayments of {repayment_total:.2f} were kept out of new consumption, which is the correct accounting treatment and also a polite way of saying the past cannot be deleted, only classified.",
+        "",
+        f"Refunds recovered {summary['refund_deduction']:.2f}. Management would like credit for this; the audit committee notes that buying something and returning it is not the same as earning money.",
         "",
         "## Risk Factors",
         "",
-        f"- Manual review risk: {len(review_rows)} row(s) require human confirmation before being promoted into stable rules.",
-        f"- Repayment matching risk: {repayment_total:.2f} of debt repayment flow is excluded from consumption and should not be double counted.",
-        f"- Internal transfer risk: {internal_transfer_total:.2f} of wallet or account movement is excluded from spend views.",
-        f"- Duplicate-source risk: {duplicate_total:.2f} of bank-side charges were treated as app-side shadows.",
+        f"- Manual review risk: {len(review_rows)} row(s) require human confirmation. The machine is honest enough to admit confusion, which already puts it ahead of many dashboards.",
+        f"- Repayment matching risk: {repayment_total:.2f} of debt repayment flow is excluded from consumption. Counting it again would be double counting, also known as budgeting by jump scare.",
+        f"- Internal transfer risk: {internal_transfer_total:.2f} of wallet or account movement is excluded from spend views. Moving money between pockets is not revenue, despite what optimism may imply.",
+        f"- Duplicate-source risk: {duplicate_total:.2f} of bank-side charges were treated as app-side shadows. One purchase appearing twice is a data problem, not a lifestyle escalation.",
         "",
         "## Segment Performance",
         "",
         *segment_lines,
+        "",
+        "Management congratulates the leading segment while reminding it that dominance in a synthetic dataset is not a moat.",
+        "",
+        "## Capital Allocation Review",
+        "",
+        f"- Consumption allocated to visible operating activity: {summary['net_consumption']:.2f}.",
+        f"- Cash tied to repayment timing: {repayment_total:.2f}. The board recommends fewer surprise sequels.",
+        f"- Refunds recovered: {summary['refund_deduction']:.2f}. Useful, but not a business model.",
+        f"- Manual review queue: {len(review_rows)} item(s). This is where ambiguity goes before it becomes a bad chart.",
         "",
         "## Auditor Notes",
         "",
@@ -401,12 +431,17 @@ def build_annual_report(
         "- Ambiguous wallet flows stay in the manual review queue instead of being silently guessed.",
         "- Douyin and other platform bills are treated as source-specific inputs because rewards, refunds, repayment labels, and merchant payments can share similar export shapes.",
         "",
-        "## Consumption Persona (消费人格画像)",
+        "## Consumption Persona",
         "",
         f"- Persona: {persona}",
+        f"- Roast: {persona_roast}",
         f"- Annual metaphor: {metaphor}",
         f"- Annual keyword: `{top_source[0]}`",
-        f"- Annual line: The best profit improvement still came from money that did not need to be spent.",
+        f"- Annual line: The best margin improvement still came from expenses that never made it past the idea stage.",
+        "",
+        "## Board Verdict",
+        "",
+        "The board finds the household entity solvent, traceable, and occasionally overconfident. The finance function has improved. The strategy function is invited to stop calling every purchase an investment.",
         "",
     ]
     return "\n".join(annual_report_lines)
@@ -487,6 +522,9 @@ def generate_outputs(rows: list[dict[str, str]]) -> None:
     (FINAL / "annual_report").mkdir(parents=True, exist_ok=True)
     annual_report = build_annual_report(rows, summary, refunds_by_original, review_rows)
     (FINAL / "annual_report" / f"annual_report_{REPORT_YEAR}.md").write_text(annual_report, encoding="utf-8")
+
+    EXAMPLES.mkdir(parents=True, exist_ok=True)
+    (EXAMPLES / f"annual_report_{REPORT_YEAR}.md").write_text(annual_report, encoding="utf-8")
 
 
 def main() -> int:

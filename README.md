@@ -3,7 +3,7 @@
 [![demo](https://github.com/sugarfolds/personal-ledger-pipeline/actions/workflows/demo.yml/badge.svg)](https://github.com/sugarfolds/personal-ledger-pipeline/actions/workflows/demo.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A local-first, source-first data pipeline that turns messy personal finance exports into a traceable ledger, then generates a playful personal annual report from the cleaned rows.
+A local-first, source-first data pipeline that turns messy personal finance exports into a traceable ledger, then generates a mildly judgmental personal annual report from the cleaned rows.
 
 This is a **portfolio-safe demo**. It contains only synthetic transactions and does not include real bank statements, account balances, merchants, transaction IDs, or counterparties.
 
@@ -14,6 +14,12 @@ This is a **portfolio-safe demo**. It contains only synthetic transactions and d
 - Preserves source evidence through `source_file` and `raw_row_number`.
 - Sends ambiguous rows to a manual-review queue instead of silently guessing.
 - Generates reproducible cleaned ledgers, summaries, review queues, a local HTML dashboard, and a Markdown personal annual report.
+
+## Example Annual Report
+
+Read the generated demo: [examples/annual_report_2026.md](examples/annual_report_2026.md).
+
+The report keeps the financial math traceable, then adds annual-report-style commentary: shareholder letter, MD&A, risk factors, segment performance, capital allocation review, auditor notes, and a consumption persona. The tone is intentionally sharper than a budgeting app: serious about classification, less patient with financial self-flattery.
 
 ## Demo In One Command
 
@@ -31,6 +37,7 @@ final/review/manual_review_queue_2026-04-01_to_2026-04-30.csv
 final/ledger/gross_ledger_2026-04-01_to_2026-04-30.csv
 final/visual/dashboard_2026-04-01_to_2026-04-30.html
 final/annual_report/annual_report_2026.md
+examples/annual_report_2026.md
 ```
 
 ## Why This Exists
@@ -93,6 +100,7 @@ The v1 annual report is generated from the cleaned ledger only. It does not read
 
 It produces a Markdown report with:
 
+- a shareholder letter,
 - financial highlights,
 - a simplified personal income statement,
 - a simplified personal cash flow statement,
@@ -100,8 +108,10 @@ It produces a Markdown report with:
 - Management Discussion and Analysis,
 - Risk Factors,
 - Segment Performance,
+- Capital Allocation Review,
 - Auditor Notes,
-- and a lightweight consumption persona.
+- a lightweight consumption persona,
+- and a board verdict.
 
 The balance sheet is intentionally limited in v1 because transaction exports alone do not prove assets, liabilities, or ending balances. A future version can add balance snapshots as a separate private input.
 
