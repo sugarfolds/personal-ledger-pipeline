@@ -1,0 +1,7 @@
+interface:
+  display_name: "Personal Ledger Pipeline"
+  short_description: "Run private ledger imports and annual reports"
+  default_prompt: "Use $personal-ledger-pipeline to import local bill exports, run the cleaned ledger pipeline, inspect review rows, and check privacy before publishing."
+
+policy:
+  allow_implicit_invocation: true

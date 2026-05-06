@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Local Personal Annual Report</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="workspace">
+        <aside class="panel controls" aria-label="Report controls">
+          <div>
+            <p class="eyebrow">Local-first</p>
+            <h1>Personal Annual Report</h1>
+            <p class="intro lang lang-en">Upload a cleaned ledger CSV or normalized JSON. Everything runs in this browser tab.</p>
+            <p class="intro lang lang-zh">上传 cleaned ledger CSV 或 normalized JSON。解析与生成都在当前浏览器标签页完成。</p>
+          </div>
+
+          <label class="dropzone" for="fileInput">
+            <input id="fileInput" type="file" accept=".csv,.json" />
+            <span class="drop-title lang lang-en">Choose CSV / JSON</span>
+            <span class="drop-title lang lang-zh">选择 CSV / JSON</span>
+            <small class="lang lang-en">Raw CSV can work when fields are recognizable; cleaned ledger exports work best.</small>
+            <small class="lang lang-zh">字段清晰的原始 CSV 可尝试解析；CLI 生成的 cleaned ledger 效果更稳。</small>
+          </label>
+
+          <div class="control-group">
+            <span class="control-label lang lang-en">Language</span>
+            <span class="control-label lang lang-zh">语言</span>
+            <div class="segmented" role="group" aria-label="Language">
+              <button class="active" type="button" data-lang="en">EN</button>
+              <button type="button" data-lang="zh">中文</button>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <span class="control-label lang lang-en">Tone</span>
+            <span class="control-label lang lang-zh">风格</span>
+            <select id="styleSelect">
+              <option value="board_roast">Board Roast</option>
+              <option value="serious">Serious Report</option>
+              <option value="social_share">Social Share</option>
+            </select>
+          </div>
+
+          <div class="actions">
+            <button id="exportMarkdown" type="button">Markdown</button>
+            <button id="exportHtml" type="button">HTML</button>
+            <button id="exportPng" type="button">PNG</button>
+          </div>
+
+          <div id="status" class="status" role="status">
+            <span class="lang lang-en">Waiting for a file.</span>
+            <span class="lang lang-zh">等待上传文件。</span>
+          </div>
+        </aside>
+
+        <section class="report-wrap" aria-live="polite">
+          <article id="report" class="report">
+            <div class="placeholder">
+              <p class="eyebrow">No network. No API.</p>
+              <h2 class="lang lang-en">Your report will appear here.</h2>
+              <h2 class="lang lang-zh">你的年报会显示在这里。</h2>
+              <p class="lang lang-en">Use the CLI cleaned ledger for stricter reconciliation, then upload the CSV here for a browser-only report.</p>
+              <p class="lang lang-zh">先用 CLI 完成更严格的对账，再把 cleaned CSV 上传到这里生成纯前端年报。</p>
+            </div>
+          </article>
+        </section>
+      </section>
+    </main>
+    <script src="./src/app.js"></script>
+  </body>
+</html>

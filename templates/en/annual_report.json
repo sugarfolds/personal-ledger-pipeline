@@ -1,0 +1,14 @@
+{
+  "serious": {
+    "shareholderLetter": "Management reports a traceable year: income, consumption, refunds, repayment timing, and review items are separated before any narrative is allowed to sound confident.",
+    "auditorNote": "The report uses cleaned ledger rows. It does not invent balances from transaction exports."
+  },
+  "board_roast": {
+    "shareholderLetter": "Management congratulates itself on classification discipline. The board notes that labeling a purchase carefully does not make it strategic.",
+    "auditorNote": "The audit committee found no magic. Repayments are timing, refunds are deductions, and optimism remains unaudited."
+  },
+  "social_share": {
+    "shareholderLetter": "My year in money: classified, reconciled, lightly roasted.",
+    "auditorNote": "Generated locally from cleaned rows."
+  }
+}

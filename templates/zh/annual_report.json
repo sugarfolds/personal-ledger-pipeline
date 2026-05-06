@@ -1,0 +1,14 @@
+{
+  "serious": {
+    "shareholderLetter": "管理层提交了一份可追溯的年度账本：收入、消费、退款、还款时点和复核事项先拆清楚，再进入叙事层。",
+    "auditorNote": "本报告使用 cleaned ledger，不根据交易流水编造余额。"
+  },
+  "board_roast": {
+    "shareholderLetter": "管理层对分类能力表示满意。董事会提醒：一笔消费被命名得很专业，账单金额也不会因此自动降低。",
+    "auditorNote": "审计委员会未发现魔法。还款属于时点，退款用于抵扣，乐观情绪暂不具备审计价值。"
+  },
+  "social_share": {
+    "shareholderLetter": "我的年度金钱切片：已分类、已对账、已接受轻度锐评。",
+    "auditorNote": "由本地 cleaned rows 生成。"
+  }
+}

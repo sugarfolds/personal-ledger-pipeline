@@ -13,13 +13,15 @@ This is a **portfolio-safe demo**. It contains only synthetic transactions and d
 - Separates real consumption from monthly repayments, internal transfers, matched refunds, and duplicate bank charges.
 - Preserves source evidence through `source_file` and `raw_row_number`.
 - Sends ambiguous rows to a manual-review queue instead of silently guessing.
-- Generates reproducible cleaned ledgers, summaries, review queues, a local HTML dashboard, and a Markdown personal annual report.
+- Generates reproducible cleaned ledgers, summaries, review queues, a local HTML dashboard, and a bilingual web annual report.
+- Adds a private-data local run path through `scripts/import_raw.py` and `scripts/run_pipeline.py`.
+- Includes a browser-only annual report prototype under `web/annual-report/` for local CSV / JSON uploads.
 
 ## Example Annual Report
 
-Read the generated demo: [examples/annual_report_2026.md](examples/annual_report_2026.md).
+Open the generated web demo: [examples/annual_report_2026.html](examples/annual_report_2026.html).
 
-The report keeps the financial math traceable, then adds annual-report-style commentary: shareholder letter, MD&A, risk factors, segment performance, capital allocation review, auditor notes, and a consumption persona. The tone is intentionally sharper than a budgeting app: serious about classification, less patient with financial self-flattery.
+The report keeps the financial math traceable, then adds annual-report-style commentary: shareholder letter, MD&A, risk factors, segment performance, capital allocation review, auditor notes, and a consumption persona. The generated dashboard and annual report can switch between English and Chinese; the annual report also includes an in-page chart explorer. The two language versions keep similar meaning while using language-specific phrasing. The tone is intentionally sharper than a budgeting app: serious about classification, less patient with financial self-flattery.
 
 ## Demo In One Command
 
@@ -27,7 +29,7 @@ The report keeps the financial math traceable, then adds annual-report-style com
 make demo
 ```
 
-Generated outputs are ignored by git and can be recreated locally at any time.
+Most generated outputs are ignored by git and can be recreated locally at any time. The `examples/` annual report files are tracked as portfolio-safe previews.
 
 ```text
 processed/normalized/current_ledger_2026-04-01_to_2026-04-30.csv
@@ -36,9 +38,46 @@ final/summary/summary_2026-04-01_to_2026-04-30.md
 final/review/manual_review_queue_2026-04-01_to_2026-04-30.csv
 final/ledger/gross_ledger_2026-04-01_to_2026-04-30.csv
 final/visual/dashboard_2026-04-01_to_2026-04-30.html
+final/annual_report/annual_report_2026.html
 final/annual_report/annual_report_2026.md
+examples/annual_report_2026.html
 examples/annual_report_2026.md
 ```
+
+## Use Your Own Data Locally
+
+The public demo stays synthetic. For private exports, run everything locally and keep generated files out of Git history.
+
+```bash
+python3 scripts/import_raw.py raw --out parsed
+python3 scripts/run_pipeline.py raw
+```
+
+The importer scans source-specific folders such as `raw/alipay/`, `raw/wechat/`, `raw/meituan/`, `raw/douyin/`, and `raw/bank/<boc|cmb|icbc|abc>/`. CSV is the stable v1 path; XLSX intake is available through `openpyxl`; PDF formats are called out with actionable warnings because those exports vary heavily by platform and bank.
+
+More detail:
+
+- [Use your own data locally](docs/use_with_your_own_data.md)
+- [Supported sources](docs/supported_sources.md)
+- [Privacy and local run checklist](docs/privacy_local_run.md)
+
+## Browser-Only Annual Report App
+
+Open the static app locally:
+
+```text
+web/annual-report/index.html
+```
+
+Upload a cleaned ledger CSV or normalized JSON. The app parses, cleans, aggregates, renders, and exports inside the browser tab. It has no backend API, login, or upload step.
+
+Current browser v1 supports:
+
+- CSV / JSON import,
+- EN / Chinese switching,
+- serious, board-roast, and social-share styles,
+- Markdown, HTML, and PNG export,
+- repayment, internal-transfer, refund, duplicate-bank-shadow, and review-queue logic.
 
 ## Why This Exists
 
@@ -64,6 +103,7 @@ flowchart LR
   C --> F["gross ledger"]
   C --> G["local dashboard"]
   C --> H["personal annual report"]
+  C --> I["browser-only annual report app"]
 ```
 
 Key design principles:
@@ -98,7 +138,7 @@ The synthetic sample data includes:
 
 The v1 annual report is generated from the cleaned ledger only. It does not read raw exports directly, does not call an LLM, and does not invent account balances.
 
-It produces a Markdown report with:
+It produces a static web report and a Markdown text version with:
 
 - a shareholder letter,
 - financial highlights,
@@ -112,6 +152,8 @@ It produces a Markdown report with:
 - Auditor Notes,
 - a lightweight consumption persona,
 - and a board verdict.
+
+The web report includes an in-page EN / Chinese toggle and a small chart explorer for source segments, cash-flow classes, and governance items. The Chinese copy is localized for tone rather than translated word-for-word.
 
 The balance sheet is intentionally limited in v1 because transaction exports alone do not prove assets, liabilities, or ending balances. A future version can add balance snapshots as a separate private input.
 
@@ -154,7 +196,13 @@ This is not a full personal finance app. It is a data pipeline demo focused on:
 
 ```text
 raw/                    synthetic sample exports only
+examples/               tracked demo annual report outputs
 scripts/                runnable sample pipeline
+scripts/parsers/        source-specific raw import registry
+scripts/core/           shared ledger schema and cleaning rules
+web/annual-report/      static browser-only annual report prototype
+templates/              deterministic narrative template examples
+skills/                 repo-distributed Codex skill workflow
 schema/rules/           unified ledger field definitions
 docs/                   portfolio notes and public-boundary guidance
 processed/              generated normalized and cleaned outputs, gitignored

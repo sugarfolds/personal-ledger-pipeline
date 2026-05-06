@@ -1,5 +1,5 @@
 # Real financial data should never be committed.
-raw/private/
+raw/**
 parsed/
 processed/
 final/
@@ -18,4 +18,8 @@ __pycache__/
 !raw/bank/boc/
 !raw/douyin/
 !raw/meituan/
-!raw/**/*.csv
+!raw/alipay/alipay_2026-04-01_to_2026-04-30.csv
+!raw/wechat/wechat_2026-04-01_to_2026-04-30.csv
+!raw/bank/boc/boc_2026-04-01_to_2026-04-30.csv
+!raw/douyin/douyin_2026-04-01_to_2026-04-30.csv
+!raw/meituan/meituan_2026-04-01_to_2026-04-30.csv
