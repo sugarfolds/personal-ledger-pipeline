@@ -289,6 +289,12 @@ function normalizeAlipayCsvRow(row) {
 }
 
 function inferType(row, flow) {
+  const repaymentText = [
+    row.counterparty,
+    row.item_title,
+    row.description,
+    row.status,
+  ].join(" ");
   const typeText = [
     row.raw_category,
     row.category,
@@ -298,9 +304,10 @@ function inferType(row, flow) {
     row.status,
   ].join(" ");
   const allText = Object.values(row).join(" ");
+  const lowerRepayment = repaymentText.toLowerCase();
   const lowerType = typeText.toLowerCase();
   const lowerAll = allText.toLowerCase();
-  if (lowerType.includes("repayment") || typeText.includes("还款") || typeText.includes("信用借还")) return "credit_repayment";
+  if (lowerRepayment.includes("repayment") || repaymentText.includes("还款")) return "credit_repayment";
   if (typeText.includes("退款") || lowerType.includes("refund")) return "refund_in";
   if (typeText.includes("投资理财") || typeText.includes("基金") || typeText.includes("股票") || typeText.includes("余额宝")) return "investment_flow";
   if (typeText.includes("充值") || typeText.includes("提现") || typeText.includes("转账") || typeText.includes("转入") || typeText.includes("转出")) return "internal_transfer";
