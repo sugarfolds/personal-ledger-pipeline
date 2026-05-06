@@ -3,7 +3,7 @@
 [![demo](https://github.com/sugarfolds/personal-ledger-pipeline/actions/workflows/demo.yml/badge.svg)](https://github.com/sugarfolds/personal-ledger-pipeline/actions/workflows/demo.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A local-first, source-first data pipeline that turns messy personal finance exports into a traceable ledger with reviewable cleaning rules.
+A local-first, source-first data pipeline that turns messy personal finance exports into a traceable ledger, then generates a playful personal annual report from the cleaned rows.
 
 This is a **portfolio-safe demo**. It contains only synthetic transactions and does not include real bank statements, account balances, merchants, transaction IDs, or counterparties.
 
@@ -13,7 +13,7 @@ This is a **portfolio-safe demo**. It contains only synthetic transactions and d
 - Separates real consumption from monthly repayments, internal transfers, matched refunds, and duplicate bank charges.
 - Preserves source evidence through `source_file` and `raw_row_number`.
 - Sends ambiguous rows to a manual-review queue instead of silently guessing.
-- Generates reproducible cleaned ledgers, summaries, review queues, and a local HTML dashboard.
+- Generates reproducible cleaned ledgers, summaries, review queues, a local HTML dashboard, and a Markdown personal annual report.
 
 ## Demo In One Command
 
@@ -30,6 +30,7 @@ final/summary/summary_2026-04-01_to_2026-04-30.md
 final/review/manual_review_queue_2026-04-01_to_2026-04-30.csv
 final/ledger/gross_ledger_2026-04-01_to_2026-04-30.csv
 final/visual/dashboard_2026-04-01_to_2026-04-30.html
+final/annual_report/annual_report_2026.md
 ```
 
 ## Why This Exists
@@ -43,7 +44,7 @@ Consumer finance exports are not clean analytics data. A single real-world payme
 - an internal wallet transfer,
 - or an item that needs manual review.
 
-This project demonstrates how to turn messy exports into a traceable ledger pipeline without handing credentials to a third party.
+This project demonstrates how to turn messy exports into a traceable ledger pipeline without handing credentials to a third party. It also shows how the cleaned ledger can support an annual-report layer: serious financial tables plus a lightly playful narrative about consumption habits.
 
 ## Pipeline Architecture
 
@@ -55,6 +56,7 @@ flowchart LR
   C --> E["manual review queue"]
   C --> F["gross ledger"]
   C --> G["local dashboard"]
+  C --> H["personal annual report"]
 ```
 
 Key design principles:
@@ -84,6 +86,24 @@ The synthetic sample data includes:
 | Duplicate bank charge | Marked as app-side shadow when amount and time match |
 | Internal transfer | Excluded from spend/income views via `transfer_scope=internal` |
 | Ambiguous wallet flow | Sent to `manual_review_queue` with original source location |
+
+## Annual Report Generator
+
+The v1 annual report is generated from the cleaned ledger only. It does not read raw exports directly, does not call an LLM, and does not invent account balances.
+
+It produces a Markdown report with:
+
+- financial highlights,
+- a simplified personal income statement,
+- a simplified personal cash flow statement,
+- a balance-sheet limitation note for the ledger-only demo,
+- Management Discussion and Analysis,
+- Risk Factors,
+- Segment Performance,
+- Auditor Notes,
+- and a lightweight consumption persona.
+
+The balance sheet is intentionally limited in v1 because transaction exports alone do not prove assets, liabilities, or ending balances. A future version can add balance snapshots as a separate private input.
 
 ## Core Fields
 
@@ -116,6 +136,7 @@ This is not a full personal finance app. It is a data pipeline demo focused on:
 - reconciliation logic,
 - refund and repayment handling,
 - manual-review workflow,
+- annual-report generation from cleaned ledger data,
 - reproducible outputs,
 - and privacy-safe project packaging.
 
