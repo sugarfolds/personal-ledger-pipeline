@@ -289,12 +289,6 @@ function normalizeAlipayCsvRow(row) {
 }
 
 function inferType(row, flow) {
-  const repaymentText = [
-    row.counterparty,
-    row.item_title,
-    row.description,
-    row.status,
-  ].join(" ");
   const typeText = [
     row.raw_category,
     row.category,
@@ -304,16 +298,77 @@ function inferType(row, flow) {
     row.status,
   ].join(" ");
   const allText = Object.values(row).join(" ");
-  const lowerRepayment = repaymentText.toLowerCase();
   const lowerType = typeText.toLowerCase();
   const lowerAll = allText.toLowerCase();
-  if (lowerRepayment.includes("repayment") || repaymentText.includes("还款")) return "credit_repayment";
   if (typeText.includes("退款") || lowerType.includes("refund")) return "refund_in";
+  if (hasRepaymentSignal(row)) {
+    if ((isExpenseFlow(flow) || isExplicitBillRepayment(row, flow)) && !hasRepaymentAdjustmentSignal(row)) return "credit_repayment";
+    return "repayment_candidate_review";
+  }
   if (typeText.includes("投资理财") || typeText.includes("基金") || typeText.includes("股票") || typeText.includes("余额宝")) return "investment_flow";
   if (typeText.includes("充值") || typeText.includes("提现") || typeText.includes("转账") || typeText.includes("转入") || typeText.includes("转出")) return "internal_transfer";
   if (flow === "其他") return "neutral_flow";
   if (lowerAll.includes("reward") || lowerAll.includes("campaign") || allText.includes("奖励") || allText.includes("补贴")) return "platform_reward";
   return "merchant_payment";
+}
+
+function hasRepaymentSignal(row) {
+  const text = [
+    row.counterparty,
+    row.item_title,
+    row.description,
+    row.status,
+  ].join(" ");
+  return text.toLowerCase().includes("repayment") || text.includes("还款");
+}
+
+function hasRepaymentAdjustmentSignal(row) {
+  const text = [
+    row.counterparty,
+    row.item_title,
+    row.description,
+    row.status,
+  ].join(" ");
+  const lower = text.toLowerCase();
+  return [
+    "退款",
+    "退回",
+    "返还",
+    "返现",
+    "冲正",
+    "撤销",
+    "立减",
+    "优惠",
+    "红包",
+  ].some((token) => text.includes(token)) || [
+    "refund",
+    "reversal",
+    "cashback",
+    "discount",
+    "coupon",
+    "rebate",
+  ].some((token) => lower.includes(token));
+}
+
+function isExplicitBillRepayment(row, flow) {
+  if (!isNeutralFlow(flow)) return false;
+  const text = [
+    row.counterparty,
+    row.item_title,
+    row.description,
+    row.status,
+  ].join(" ");
+  return text.includes("还款成功") && (text.includes("主动还款") || text.includes("账单还款") || text.includes("花呗") || text.includes("月付"));
+}
+
+function isExpenseFlow(flow) {
+  const value = String(flow || "").toLowerCase();
+  return value === "支出" || value === "expense" || value === "debit";
+}
+
+function isNeutralFlow(flow) {
+  const value = String(flow || "").toLowerCase();
+  return value === "其他" || value === "不计收支" || value === "neutral";
 }
 
 function inferStatus(normalizedType) {
@@ -322,6 +377,7 @@ function inferStatus(normalizedType) {
 }
 
 function inferDirection(flow, row, normalizedType) {
+  if (["credit_repayment", "personal_repayment"].includes(normalizedType)) return "expense";
   if (["neutral_flow", "investment_flow"].includes(normalizedType)) return "neutral";
   if (normalizedType === "refund_in" || normalizedType === "platform_reward" || row.credit || flow === "收入") return "income";
   if (flow === "其他") return "neutral";
@@ -391,10 +447,24 @@ function cleanRows(rows) {
   return rows.map((row) => {
     const next = { ...row };
     if (["credit_repayment", "personal_repayment"].includes(next.normalized_type)) {
-      next.transfer_scope = "debt_repayment";
+      if (next.direction === "expense" && !hasRepaymentAdjustmentSignal(next)) {
+        next.transfer_scope = "debt_repayment";
+        next.include_in_ledger = "false";
+        next.clean_status = "excluded_credit_repayment";
+        next.clean_rule = "repayment_excluded_under_consumption_basis";
+      } else {
+        next.transfer_scope = "repayment_review";
+        next.include_in_ledger = "false";
+        next.needs_review = "true";
+        next.clean_status = "needs_review";
+        next.clean_rule = "repayment_candidate_failed_direction_or_adjustment_check";
+      }
+    } else if (next.normalized_type === "repayment_candidate_review") {
+      next.transfer_scope = "repayment_review";
       next.include_in_ledger = "false";
-      next.clean_status = "excluded_credit_repayment";
-      next.clean_rule = "repayment_excluded_under_consumption_basis";
+      next.needs_review = "true";
+      next.clean_status = "needs_review";
+      next.clean_rule = "repayment_candidate_failed_direction_or_adjustment_check";
     } else if (["wallet_topup", "internal_transfer"].includes(next.normalized_type)) {
       next.transfer_scope = "internal";
       next.include_in_ledger = "false";
@@ -421,6 +491,7 @@ function computeMetrics(rows) {
   const incomeRows = rows.filter((row) => row.direction === "income" && row.normalized_type !== "refund_in");
   const refundRows = rows.filter((row) => row.normalized_type === "refund_in");
   const repaymentRows = rows.filter((row) => row.transfer_scope === "debt_repayment");
+  const repaymentReviewRows = rows.filter((row) => row.transfer_scope === "repayment_review");
   const investmentRows = rows.filter((row) => row.transfer_scope === "investment");
   const internalRows = rows.filter((row) => row.transfer_scope === "internal");
   const neutralRows = rows.filter((row) => row.transfer_scope === "neutral");
@@ -452,6 +523,7 @@ function computeMetrics(rows) {
     incomeRows,
     refundRows,
     repaymentRows,
+    repaymentReviewRows,
     investmentRows,
     internalRows,
     neutralRows,
@@ -461,6 +533,7 @@ function computeMetrics(rows) {
     netConsumption,
     netCashflow: grossIncome - grossExpense,
     repaymentTotal,
+    repaymentReviewTotal: sum(repaymentReviewRows, "amount"),
     investmentTotal,
     internalTransferTotal,
     neutralTotal,
@@ -898,6 +971,7 @@ function buildZhNarrative(metrics, flags, persona) {
   const quotePool = ZH_TEMPLATE_BANK.quotes;
   const risks = [
     flags.repaymentHeavy ? `还款压力偏高：${moneyText(metrics.repaymentTotal)} 的历史消费正在申请复议。` : `还款项目已单独列示，避免把旧账重复算成新消费。`,
+    metrics.repaymentReviewRows.length ? `还款候选待复核：${metrics.repaymentReviewRows.length} 笔含退款、优惠或方向异常，已从还款合计中剔除。` : `还款口径已通过校验：支出类明确还款、或支付宝账单还款成功，才进入还款合计。`,
     flags.investmentHeavy ? `投资理财流量较大：${moneyText(metrics.investmentTotal)} 不计入消费，但足以影响年度剧情。` : `投资理财流量已从消费中剥离，避免把资产流动写成购物故事。`,
     flags.concentrated ? `${top} 集中度较高，单一分部已经具备左右年度叙事的能力。` : `消费分部较分散，暂未发现单一部门独揽骂名。`,
     metrics.neutralRows.length ? `不计收支 ${metrics.neutralRows.length} 笔，属于账本里的灰色会议室。` : `不计收支项目较少，报表暂时没有太多暗门。`,
@@ -947,9 +1021,11 @@ function buildEnNarrative(metrics, flags, persona) {
     quote: "The bill remembers what management rebranded as strategy.",
     risks: [
       `Repayments excluded from new consumption: ${moneyText(metrics.repaymentTotal)}.`,
+      metrics.repaymentReviewRows.length
+        ? `${metrics.repaymentReviewRows.length} repayment-like rows were held for review because of direction or adjustment terms.`
+        : `Repayment classification passed direction and explicit bill-settlement checks.`,
       `Investment and neutral flows separated: ${moneyText(metrics.investmentTotal + metrics.neutralTotal)}.`,
       `Refund recovery: ${moneyText(metrics.refundDeduction)}.`,
-      `Rows parsed: ${metrics.totalRows}.`,
     ],
     highlights: [
       { label: "Net consumption", value: moneyText(metrics.netConsumption), note: "after refunds" },
@@ -1011,6 +1087,7 @@ function render() {
           ${statementRow(t("Refund recovery", "退款挽回"), moneyText(metrics.refundDeduction))}
           ${statementRow(t("Net consumption", "净消费"), moneyText(metrics.netConsumption))}
           ${statementRow(t("Repayment excluded", "已排除还款"), moneyText(metrics.repaymentTotal))}
+          ${statementRow(t("Repayment candidates held for review", "还款候选复核"), t(`${metrics.repaymentReviewRows.length} rows`, `${metrics.repaymentReviewRows.length} 笔`))}
           ${statementRow(t("Investment / neutral flow", "投资及中性流"), moneyText(metrics.investmentTotal + metrics.neutralTotal))}
         </div>
       </section>
@@ -1104,6 +1181,7 @@ function markdownReport() {
     `- ${t("Net consumption", "净消费")}: ${moneyText(metrics.netConsumption)}`,
     `- ${t("Refund recovery", "退款挽回")}: ${moneyText(metrics.refundDeduction)}`,
     `- ${t("Repayment excluded", "已排除还款")}: ${moneyText(metrics.repaymentTotal)}`,
+    `- ${t("Repayment candidates held for review", "还款候选复核")}: ${t(`${metrics.repaymentReviewRows.length} rows`, `${metrics.repaymentReviewRows.length} 笔`)}`,
     `- ${t("Investment / neutral flow", "投资及中性流")}: ${moneyText(metrics.investmentTotal + metrics.neutralTotal)}`,
     "",
     `## ${t("Annual Line", "年度金句")}`,

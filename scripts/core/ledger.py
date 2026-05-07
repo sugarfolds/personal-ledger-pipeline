@@ -160,10 +160,23 @@ def clean(rows: list[dict[str, str]]) -> list[dict[str, str]]:
     for row in rows:
         ntype = row["normalized_type"]
         if ntype in {"credit_repayment", "personal_repayment"}:
-            row["transfer_scope"] = "debt_repayment"
+            if row["direction"] == "expense":
+                row["transfer_scope"] = "debt_repayment"
+                row["include_in_ledger"] = "false"
+                row["clean_status"] = "excluded_credit_repayment"
+                row["clean_rule"] = "repayment_excluded_under_consumption_basis"
+            else:
+                row["transfer_scope"] = "repayment_review"
+                row["include_in_ledger"] = "false"
+                row["needs_review"] = "true"
+                row["clean_status"] = "needs_review"
+                row["clean_rule"] = "repayment_candidate_failed_direction_check"
+        elif ntype == "repayment_candidate_review":
+            row["transfer_scope"] = "repayment_review"
             row["include_in_ledger"] = "false"
-            row["clean_status"] = "excluded_credit_repayment"
-            row["clean_rule"] = "repayment_excluded_under_consumption_basis"
+            row["needs_review"] = "true"
+            row["clean_status"] = "needs_review"
+            row["clean_rule"] = "repayment_candidate_failed_adjustment_check"
         elif ntype in {"wallet_topup", "internal_transfer"}:
             row["transfer_scope"] = "internal"
             row["include_in_ledger"] = "false"

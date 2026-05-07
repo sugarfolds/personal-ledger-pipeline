@@ -9,6 +9,24 @@ from scripts.core.ledger import base_row, read_csv, money
 
 SUPPORTED_BANKS = {"abc", "boc", "cmb", "icbc"}
 APP_SOURCES = {"alipay", "wechat", "meituan", "douyin"}
+REPAYMENT_KEYWORDS = ["repayment", "还款"]
+REPAYMENT_ADJUSTMENT_KEYWORDS = [
+    "refund",
+    "reversal",
+    "cashback",
+    "discount",
+    "coupon",
+    "rebate",
+    "退款",
+    "退回",
+    "返还",
+    "返现",
+    "冲正",
+    "撤销",
+    "立减",
+    "优惠",
+    "红包",
+]
 
 
 class IntakeError(RuntimeError):
@@ -109,16 +127,21 @@ def _parse_alipay_csv(root: Path, path: Path) -> list[dict[str, str]]:
         raw_direction = row.get("raw_direction") or row.get("direction") or ""
         status = row.get("status", "")
         title = _text(row.get("counterparty"), row.get("item_title"), row.get("payment_method"))
+        repayment_text = _text(row.get("counterparty"), row.get("item_title"), status)
         if raw_direction == "收入":
             out["direction"] = "income"
             out["normalized_type"] = "refund_in" if _has_any(status + title, ["退款", "refund"]) else "income"
+        elif raw_direction in {"支出", "其他", "不计收支"} and _is_confirmed_repayment(repayment_text):
+            out["direction"] = "expense"
+            out["normalized_type"] = "credit_repayment"
         elif raw_direction == "其他":
             out["direction"] = "neutral"
             out["normalized_type"] = "unknown_wallet_flow"
             out["needs_review"] = "true"
-        elif _has_any(title, ["repayment", "还款"]):
+        elif _is_repayment_candidate(repayment_text):
             out["direction"] = "expense"
-            out["normalized_type"] = "credit_repayment"
+            out["normalized_type"] = "repayment_candidate_review"
+            out["needs_review"] = "true"
         elif _has_any(title, ["top-up", "topup", "充值", "转入"]):
             out["direction"] = "expense"
             out["normalized_type"] = "wallet_topup"
@@ -140,10 +163,15 @@ def _parse_wechat_csv(root: Path, path: Path) -> list[dict[str, str]]:
             out["direction"] = "income"
             out["normalized_type"] = "refund_in" if _has_any(title, ["退款", "refund"]) else "income"
             out["normalized_status"] = "refund" if out["normalized_type"] == "refund_in" else "success"
-        elif _has_any(title, ["repayment", "还款"]):
+        elif _is_confirmed_repayment(title):
             out["direction"] = "expense"
             out["normalized_type"] = "personal_repayment"
             out["normalized_status"] = "success"
+        elif _is_repayment_candidate(title):
+            out["direction"] = "expense"
+            out["normalized_type"] = "repayment_candidate_review"
+            out["normalized_status"] = "success"
+            out["needs_review"] = "true"
         else:
             out["direction"] = "expense"
             out["normalized_type"] = "merchant_payment"
@@ -158,12 +186,16 @@ def _parse_meituan_csv(root: Path, path: Path) -> list[dict[str, str]]:
         out = base_row("meituan", root, path, idx, row)
         kind = row.get("kind", "")
         title = _text(kind, row.get("item_title"), row.get("counterparty"))
-        if _has_any(title, ["还款", "repayment"]):
-            out["direction"] = "expense"
-            out["normalized_type"] = "credit_repayment"
-        elif _has_any(title, ["退款", "refund"]):
+        if _has_any(title, ["退款", "refund"]):
             out["direction"] = "income"
             out["normalized_type"] = "refund_in"
+        elif _is_confirmed_repayment(title):
+            out["direction"] = "expense"
+            out["normalized_type"] = "credit_repayment"
+        elif _is_repayment_candidate(title):
+            out["direction"] = "expense"
+            out["normalized_type"] = "repayment_candidate_review"
+            out["needs_review"] = "true"
         else:
             out["direction"] = "expense"
             out["normalized_type"] = "merchant_payment"
@@ -182,10 +214,15 @@ def _parse_douyin_csv(root: Path, path: Path) -> list[dict[str, str]]:
             out["direction"] = "income"
             out["normalized_type"] = "platform_reward" if _has_any(title, ["reward", "campaign", "奖励", "补贴"]) else "refund_in"
             out["normalized_status"] = "success" if out["normalized_type"] == "platform_reward" else "refund"
-        elif _has_any(title, ["repayment", "还款"]):
+        elif _is_confirmed_repayment(title):
             out["direction"] = "expense"
             out["normalized_type"] = "credit_repayment"
             out["normalized_status"] = "success"
+        elif _is_repayment_candidate(title):
+            out["direction"] = "expense"
+            out["normalized_type"] = "repayment_candidate_review"
+            out["normalized_status"] = "success"
+            out["needs_review"] = "true"
         else:
             out["direction"] = "expense"
             out["normalized_type"] = "merchant_payment"
@@ -226,6 +263,14 @@ def _text(*values: str | None) -> str:
 def _has_any(value: str, needles: list[str]) -> bool:
     lowered = value.lower()
     return any(needle.lower() in lowered for needle in needles)
+
+
+def _is_repayment_candidate(value: str) -> bool:
+    return _has_any(value, REPAYMENT_KEYWORDS)
+
+
+def _is_confirmed_repayment(value: str) -> bool:
+    return _is_repayment_candidate(value) and not _has_any(value, REPAYMENT_ADJUSTMENT_KEYWORDS)
 
 
 def _read_table(path: Path) -> list[dict[str, str]]:
