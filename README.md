@@ -1,5 +1,7 @@
 # Personal Ledger Pipeline
 
+> Local-first finance exports cleaned into an auditable ledger and annual report.
+
 [![demo](https://github.com/sugarfolds/personal-ledger-pipeline/actions/workflows/demo.yml/badge.svg)](https://github.com/sugarfolds/personal-ledger-pipeline/actions/workflows/demo.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
